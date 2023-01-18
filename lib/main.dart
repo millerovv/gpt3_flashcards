@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gpt3_flashcards/locator/locator.dart';
 import 'package:gpt3_flashcards/presentation/navigation/router.dart';
 
 void main() {
+  initLocator();
   runApp(const MyApp());
 }
 

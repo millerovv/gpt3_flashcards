@@ -15,4 +15,15 @@ class KindleVocabEntryModel {
   final String usageExample;
 
   final String? wordBeforeCleanUp;
+
+  KindleVocabEntryModel copyWith({
+    String? word,
+    String? usageExample,
+    String? wordBeforeCleanUp,
+  }) =>
+      KindleVocabEntryModel(
+        word: word ?? this.word,
+        usageExample: usageExample ?? this.usageExample,
+        wordBeforeCleanUp: wordBeforeCleanUp ?? this.wordBeforeCleanUp,
+      );
 }
