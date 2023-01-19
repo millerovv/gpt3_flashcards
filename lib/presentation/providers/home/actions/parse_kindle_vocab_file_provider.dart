@@ -37,11 +37,23 @@ final parseKindleVocabFileProvider =
         final cleanedWords = await interactor
             .gpt3CleanUpGermanWords(entries.map((e) => e.word).toList());
 
-        print(
-            'entriesL:${entries.length}, cleanedWordsL:${cleanedWords.length}');
+        if (entries.length != cleanedWords.length) {
+          throw Exception('Cleaning result length does not match :c');
+        }
+
+        final cleanedEntries = <KindleVocabEntryModel>[];
+
+        for (int i = 0; i < entries.length - 1; i++) {
+          final originalEntry = entries[i];
+          final cleanedWord = cleanedWords[i];
+          cleanedEntries.add(originalEntry.copyWith(
+            wordBeforeCleanUp: originalEntry.word,
+            word: cleanedWord,
+          ));
+        }
 
         ref.read(parsedKindleVocabProvider.notifier).state =
-            ParsedKindleVocabModel(entries);
+            ParsedKindleVocabModel(cleanedEntries);
       });
     };
   },

@@ -15,9 +15,6 @@ class OpenAIInteractor {
 
   Future<List<String>> gpt3CleanUpGermanWords(List<String> words) async {
     final cleanUpPrompt = _getCleanUpWordsPrompt(words);
-    print(
-        'cleanUpPrompt: L=${cleanUpPrompt.length}, T=${cleanUpPrompt.openAITokensLength}');
-
     if (cleanUpPrompt.openAITokensLength < maxPromptTokens) {
       final response = await service.createCompletion(
         OpenAICompletionRequestBody(
@@ -33,11 +30,7 @@ class OpenAIInteractor {
       var reqTokens = 0;
       for (int i = 0; i < words.length; i++) {
         final nextWord = words[i];
-        if (reqTokens + nextWord.openAITokensLength < maxPromptTokens) {
-          reqEntries.add(nextWord);
-          reqTokens += nextWord.openAITokensLength;
-        } else {
-          print('add reqBody T=${maxTotalTokens - reqTokens}');
+        if (reqTokens + nextWord.openAITokensLength >= maxPromptTokens) {
           reqBodies.add(
             OpenAICompletionRequestBody(
               prompt: _getCleanUpWordsPrompt(reqEntries),
@@ -48,6 +41,8 @@ class OpenAIInteractor {
           reqEntries.clear();
           reqTokens = 0;
         }
+        reqEntries.add(nextWord);
+        reqTokens += nextWord.openAITokensLength;
       }
       if (reqEntries.isNotEmpty) {
         reqBodies.add(
@@ -59,12 +54,7 @@ class OpenAIInteractor {
         );
       }
       final responses =
-          await Future.wait(reqBodies.map((e) => service.createCompletion(
-                OpenAICompletionRequestBody(
-                  prompt: cleanUpPrompt,
-                  maxTokens: maxTotalTokens - cleanUpPrompt.openAITokensLength,
-                ),
-              )));
+          await Future.wait(reqBodies.map((e) => service.createCompletion(e)));
       return _parseResponse(responses);
     }
   }
@@ -84,7 +74,7 @@ class OpenAIInteractor {
   String _getCleanUpWordsPrompt(List<String> words) {
     return 'Based on a list of german words, create an array with these words in the form: ["word1", "word2", "word3"]. '
         'If the word is a verb, convert it to the infinitive form, if needed. '
-        'If the word is a noun, convert it to the single form and add the definite article, if needed. My list of words:\n${words.join('\n')}';
+        'If the word is a noun, convert it to the single form and add the definite article. My list of words:\n${words.join('\n')}';
   }
 }
 

@@ -17,7 +17,21 @@ class ParsedKindleVocabPreview extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Text(entry.word),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(entry.word),
+                      if (entry.wordBeforeCleanUp != null)
+                        Text(
+                          entry.wordBeforeCleanUp!,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyText1
+                              ?.copyWith(
+                                  decoration: TextDecoration.lineThrough),
+                        ),
+                    ],
+                  ),
                   const SizedBox(width: 24),
                   Expanded(child: Text(entry.usageExample)),
                 ],
