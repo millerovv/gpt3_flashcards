@@ -32,6 +32,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
+                    Text(
+                      'GPT-3 Flashcards Generator',
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
+                    const SizedBox(height: 32),
                     const Text('Upload .tsv file with Kindle vocabulary.'),
                     const SizedBox(height: 8),
                     const SelectionArea(
