@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:gpt3_flashcards/data/open_ai/open_ai_api_service.dart';
 import 'package:gpt3_flashcards/data/open_ai/request/open_ai_completion_request_body.gen.dart';
 import 'package:gpt3_flashcards/data/open_ai/response/open_ai_completion_response.gen.dart';
+import 'package:gpt3_flashcards/presentation/models/flashcard_model.dart';
 
 const maxTotalTokens = 4096;
 const maxPromptTokens = 1700;
@@ -20,17 +22,18 @@ class OpenAIInteractor {
     );
     final responses = await Future.wait(
         requestBodies.map((e) => service.createCompletion(e)));
-    return _parseCompletionResponses(responses);
+    return _parseCleanUpWordsResponses(responses);
   }
 
-  Future<List<String>> gpt3GenerateFlashcards(List<String> words) async {
+  Future<List<FlashcardModel>> gpt3GenerateFlashcards(
+      List<String> words) async {
     final requestBodies = _generateCompletionRequests(
       entries: words,
       promptGenerator: _generateFlashcardsPrompt,
     );
     final responses = await Future.wait(
         requestBodies.map((e) => service.createCompletion(e)));
-    return _parseCompletionResponses(responses);
+    return _parseGenerateFlashcardsResponses(responses);
   }
 
   /// Returns a list of Completion request bodies for a list
@@ -83,7 +86,7 @@ class OpenAIInteractor {
     return requestBodies;
   }
 
-  List<String> _parseCompletionResponses(
+  List<String> _parseCleanUpWordsResponses(
       List<OpenAICompletionResponse> responses) {
     final result = <String>[];
     for (final response in responses) {
@@ -96,11 +99,64 @@ class OpenAIInteractor {
     return result;
   }
 
+  List<FlashcardModel> _parseGenerateFlashcardsResponses(
+      List<OpenAICompletionResponse> responses) {
+    final flashcards = <FlashcardModel>[];
+    for (final response in responses) {
+      if (response.choices.isEmpty) {
+        throw Exception('Empty response');
+      }
+      final text = response.choices.first.text;
+      final responseFlashcards = _parseGenerateFlashcardsRespText(text);
+      flashcards.addAll(responseFlashcards);
+    }
+    return flashcards;
+  }
+
+  List<FlashcardModel> _parseGenerateFlashcardsRespText(String text) {
+    final wordAndTranslationExp = RegExp(r'(.*?)\|=1=\|((.*))\|=2=\|');
+    final translationAndExampleExp = RegExp(r'\|=1=\|(.*?)\|=2=\|((.*))\|');
+
+    final wordAndTranslationMatches =
+        wordAndTranslationExp.allMatches(text).toList();
+    final translationAndExampleMatches =
+        translationAndExampleExp.allMatches(text).toList();
+    if (wordAndTranslationMatches.isEmpty ||
+        translationAndExampleMatches.isEmpty ||
+        wordAndTranslationMatches.length !=
+            translationAndExampleMatches.length) {
+      throw Exception(
+          'Generated flashcards response RegExp matches validation failed.');
+    }
+
+    final flashcards = <FlashcardModel>[];
+    for (int i = 0; i < wordAndTranslationMatches.length; i++) {
+      final wordAndTranslationMatch = wordAndTranslationMatches[i];
+      final translationAndExampleMatch = translationAndExampleMatches[i];
+      String word = '', translation = '', example = '';
+      try {
+        word = wordAndTranslationMatch.group(1) ?? '';
+        translation = wordAndTranslationMatch.group(2) ?? '';
+        example = translationAndExampleMatch.group(2) ?? '';
+      } catch (ex) {
+        debugPrint(
+            'Exception caught while parsing generation result with RegExp: $ex');
+      }
+      flashcards.add(FlashcardModel(
+        word: word,
+        translation: translation,
+        example: example,
+      ));
+    }
+
+    return flashcards;
+  }
+
   String _getCleanUpWordsPrompt(List<String> words) {
     return 'Based on a list of german words, create an array with these words in the form: ["word1", "word2", "word3"]. '
         'If the word is a verb, convert it to the infinitive form, if needed. '
         'If the word is an adjective, convert it to the single form in nominative case. '
-        'If the word is a noun, convert it to the single form and add the definite article. '
+        'If the word is a noun, convert it to the single form and add the definite article to the word. '
         'My list of words:\n${words.join('\n')}';
   }
 

@@ -25,14 +25,15 @@ class OpenAIApiService {
       OpenAICompletionRequestBody body) async {
     final uri = Uri.parse('$baseOpenAIUrl/completions');
     try {
-      debugPrint('$_logTag Request: $uri');
+      final jsonBody = jsonEncode(body.toJson());
+      debugPrint('$_logTag Request: $uri; body: $jsonBody');
       var response = await _client.post(
         uri,
         headers: {
           HttpHeaders.contentTypeHeader: ContentType.json.value,
           HttpHeaders.authorizationHeader: 'Bearer $openAIApiKey',
         },
-        body: jsonEncode(body.toJson()),
+        body: jsonBody,
       );
       final bodyDecoded = utf8.decode(response.bodyBytes);
       debugPrint('$_logTag Response: ${response.statusCode} ${bodyDecoded}');

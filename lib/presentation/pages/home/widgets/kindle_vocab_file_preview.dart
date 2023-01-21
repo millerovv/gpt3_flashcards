@@ -40,7 +40,10 @@ class KindleVocabFilePreview extends StatelessWidget {
                 backgroundColor:
                     MaterialStateProperty.all(const Color(0xFF4AA181)),
               ),
-              child: const Text('GPT-3 Clean'),
+              child: const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('GPT-3 Clean'),
+              ),
             ),
           ],
         ),

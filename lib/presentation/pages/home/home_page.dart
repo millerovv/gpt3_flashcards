@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gpt3_flashcards/presentation/pages/home/widgets/kindle_flashcards_preview.dart';
 import 'package:gpt3_flashcards/presentation/pages/home/widgets/kindle_vocab_file_preview.dart';
 import 'package:gpt3_flashcards/presentation/pages/home/widgets/parsed_kindle_vocab_preview.dart';
-import 'package:gpt3_flashcards/presentation/providers/home/actions/parse_kindle_vocab_file_provider.dart';
+import 'package:gpt3_flashcards/presentation/providers/home/actions/clean_kindle_vocab_file_provider.dart';
+import 'package:gpt3_flashcards/presentation/providers/home/actions/generate_kindle_flashcards_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/actions/pick_kindle_vocab_file_provider.dart';
+import 'package:gpt3_flashcards/presentation/providers/home/data/kindle_flashcards_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/data/kindle_vocab_file_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/data/parsed_kindle_vocab_provider.dart';
 import 'package:gpt3_flashcards/presentation/widgets/loading_indicator_overlay.dart';
@@ -19,11 +22,13 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final vocabFile = ref.watch(kindleVocabFileProvider);
-    final parsingStatus = ref.watch(parseKindleVocabFileStatusProvider);
+    final parsingStatus = ref.watch(cleanKindleVocabFileStatusProvider);
     final parsedVocab = ref.watch(parsedKindleVocabProvider);
+    final generationStatus = ref.watch(generateKindleFlashcardsStatusProvider);
+    final kindleFlashcards = ref.watch(kindleFlashcardsProvider);
     return Scaffold(
       body: LoadingIndicatorOverlay(
-        show: parsingStatus.isLoading,
+        show: parsingStatus.isLoading || generationStatus.isLoading,
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -46,14 +51,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => ref.read(pickKindleVocabFileProvider)(),
-                      child: const Text('Upload'),
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Text('Upload'),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     if (vocabFile != null) ...[
                       KindleVocabFilePreview(
                         file: vocabFile,
                         onClean: () {
-                          ref.read(parseKindleVocabFileProvider)();
+                          ref.read(cleanKindleVocabFileProvider)();
                         },
                       ),
                       const SizedBox(height: 12),
@@ -61,6 +69,23 @@ class _HomePageState extends ConsumerState<HomePage> {
                     if (parsedVocab != null) ...[
                       ParsedKindleVocabPreview(vocabModel: parsedVocab),
                       const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: () =>
+                            ref.read(generateKindleFlashcardsProvider)(),
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(
+                              const Color(0xFF4AA181)),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Text('Generate Flashcards'),
+                        ),
+                      ),
+                      const SizedBox(height: 80),
+                    ],
+                    if (kindleFlashcards != null) ...[
+                      KindleFlashcardsPreview(
+                          kindleFlashcards: kindleFlashcards),
                     ],
                   ],
                 ),

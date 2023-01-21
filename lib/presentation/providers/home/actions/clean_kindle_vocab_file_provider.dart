@@ -1,23 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gpt3_flashcards/domain/open_ai_interactor.dart';
 import 'package:gpt3_flashcards/locator/locator.dart';
-import 'package:gpt3_flashcards/presentation/models/parsed_kindle_vocab_model.dart';
+import 'package:gpt3_flashcards/presentation/models/kindle_vocab_model.dart';
 import 'package:gpt3_flashcards/presentation/providers/base/action_status_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/data/kindle_vocab_file_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/data/parsed_kindle_vocab_provider.dart';
 
-const parseKindleVocabFileKey = 'parse_kindle_vocab_key';
+const cleanKindleVocabFileKey = 'clean_kindle_vocab_key';
 
-final parseKindleVocabFileStatusProvider =
-    declareActionStatusProvider(parseKindleVocabFileKey);
+final cleanKindleVocabFileStatusProvider =
+    declareActionStatusProvider(cleanKindleVocabFileKey);
 
-final parseKindleVocabFileProvider =
+final cleanKindleVocabFileProvider =
     Provider.autoDispose<Future<void> Function()>(
   (ref) {
     final interactor = locator<OpenAIInteractor>();
     return () async {
       await ref
-          .read(actionStatusProvider(parseKindleVocabFileKey).notifier)
+          .read(actionStatusProvider(cleanKindleVocabFileKey).notifier)
           .run(() async {
         final file = ref.read(kindleVocabFileProvider);
         if (file == null) {
@@ -53,13 +53,13 @@ final parseKindleVocabFileProvider =
         }
 
         ref.read(parsedKindleVocabProvider.notifier).state =
-            ParsedKindleVocabModel(cleanedEntries);
+            KindleVocabModel(cleanedEntries);
       });
     };
   },
   dependencies: [
     kindleVocabFileProvider,
-    actionStatusProvider(parseKindleVocabFileKey),
+    actionStatusProvider(cleanKindleVocabFileKey),
     parsedKindleVocabProvider,
   ],
 );
