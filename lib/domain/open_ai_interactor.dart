@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:gpt3_flashcards/data/open_ai/open_ai_api_service.dart';
@@ -121,23 +122,22 @@ class OpenAIInteractor {
         wordAndTranslationExp.allMatches(text).toList();
     final translationAndExampleMatches =
         translationAndExampleExp.allMatches(text).toList();
-    if (wordAndTranslationMatches.isEmpty ||
-        translationAndExampleMatches.isEmpty ||
-        wordAndTranslationMatches.length !=
-            translationAndExampleMatches.length) {
-      throw Exception(
-          'Generated flashcards response RegExp matches validation failed.');
-    }
 
     final flashcards = <FlashcardModel>[];
-    for (int i = 0; i < wordAndTranslationMatches.length; i++) {
-      final wordAndTranslationMatch = wordAndTranslationMatches[i];
-      final translationAndExampleMatch = translationAndExampleMatches[i];
+    final maxIndex = max(
+        wordAndTranslationMatches.length, translationAndExampleMatches.length);
+    for (int i = 0; i < maxIndex; i++) {
+      final wordAndTranslationMatch = i < wordAndTranslationMatches.length
+          ? wordAndTranslationMatches[i]
+          : null;
+      final translationAndExampleMatch = i < translationAndExampleMatches.length
+          ? translationAndExampleMatches[i]
+          : null;
       String word = '', translation = '', example = '';
       try {
-        word = wordAndTranslationMatch.group(1) ?? '';
-        translation = wordAndTranslationMatch.group(2) ?? '';
-        example = translationAndExampleMatch.group(2) ?? '';
+        word = wordAndTranslationMatch?.group(1) ?? '';
+        translation = wordAndTranslationMatch?.group(2) ?? '';
+        example = translationAndExampleMatch?.group(2) ?? '';
       } catch (ex) {
         debugPrint(
             'Exception caught while parsing generation result with RegExp: $ex');
@@ -153,17 +153,17 @@ class OpenAIInteractor {
   }
 
   String _getCleanUpWordsPrompt(List<String> words) {
-    return 'Based on a list of german words, create an array with these words in the form: ["word1", "word2", "word3"]. '
-        'If the word is a verb, convert it to the infinitive form, if needed. '
-        'If the word is an adjective, convert it to the single form in nominative case. '
-        'If the word is a noun, convert it to the single form and add the definite article to the word. '
+    return 'Based on a list of words, create an array from them with in the form: ["word1", "word2", "word3"].'
+        'If word is a verb, convert it to the infinitive form. '
+        'If word is a noun, convert it to the single form and add the definite article. '
+        'If word is an adjective, convert it to the single form in nominative case. '
         'My list of words:\n${words.join('\n')}';
   }
 
   String _generateFlashcardsPrompt(List<String> words) {
     return 'You will generate list of flashcards based on a list of german words. '
         'For each word, provide one or multiple most popular Russian translations and a short example in german. '
-        'Output in format word|=1=|translation|=2=|example. '
+        'Output in format word|=1=|translation|=2=|example. Split lines with |.'
         'My list of words:\n${words.join('\n')}';
   }
 }

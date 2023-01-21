@@ -4,6 +4,7 @@ import 'package:gpt3_flashcards/presentation/pages/home/widgets/kindle_flashcard
 import 'package:gpt3_flashcards/presentation/pages/home/widgets/kindle_vocab_file_preview.dart';
 import 'package:gpt3_flashcards/presentation/pages/home/widgets/parsed_kindle_vocab_preview.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/actions/clean_kindle_vocab_file_provider.dart';
+import 'package:gpt3_flashcards/presentation/providers/home/actions/export_kindle_flashcards_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/actions/generate_kindle_flashcards_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/actions/pick_kindle_vocab_file_provider.dart';
 import 'package:gpt3_flashcards/presentation/providers/home/data/kindle_flashcards_provider.dart';
@@ -26,9 +27,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     final parsedVocab = ref.watch(parsedKindleVocabProvider);
     final generationStatus = ref.watch(generateKindleFlashcardsStatusProvider);
     final kindleFlashcards = ref.watch(kindleFlashcardsProvider);
+    final exportStatus = ref.watch(exportKindleFlashcardsStatusProvider);
     return Scaffold(
       body: LoadingIndicatorOverlay(
-        show: parsingStatus.isLoading || generationStatus.isLoading,
+        show: parsingStatus.isLoading ||
+            generationStatus.isLoading ||
+            exportStatus.isLoading,
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -86,6 +90,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                     if (kindleFlashcards != null) ...[
                       KindleFlashcardsPreview(
                           kindleFlashcards: kindleFlashcards),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: () =>
+                            ref.read(exportKindleFlashcardsProvider)(),
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Text('Export'),
+                        ),
+                      ),
                     ],
                   ],
                 ),
