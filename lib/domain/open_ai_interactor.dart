@@ -95,7 +95,11 @@ class OpenAIInteractor {
         throw Exception('Empty response');
       }
       final text = response.choices.first.text;
-      result.addAll((jsonDecode(text) as List).cast<String>());
+      try {
+        result.addAll((jsonDecode(text) as List).cast<String>());
+      } catch (ex) {
+        debugPrint('Json parsing failed for: $text');
+      }
     }
     return result;
   }

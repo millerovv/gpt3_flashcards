@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gpt3_flashcards/domain/open_ai_interactor.dart';
 import 'package:gpt3_flashcards/locator/locator.dart';
@@ -28,12 +31,13 @@ final generateKindleFlashcardsProvider =
         final flashcards = await interactor.gpt3GenerateFlashcards(words);
 
         if (words.length != flashcards.length) {
-          throw Exception(
-              'Generated flashcards length does not match input entries');
+          debugPrint('Generated flashcards length does not match input entries'
+              'Original words: ${words.length},'
+              'Flashcards: ${flashcards.length}');
         }
 
         final kindleFlashcards = <KindleFlashcardModel>[];
-        for (int i = 0; i < words.length; i++) {
+        for (int i = 0; i < min(words.length, flashcards.length); i++) {
           final flashcard = flashcards[i];
           final entry = kindleVocab.entries[i];
           final kindleFlashcard = KindleFlashcardModel(

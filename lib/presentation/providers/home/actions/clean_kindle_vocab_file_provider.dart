@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gpt3_flashcards/domain/open_ai_interactor.dart';
 import 'package:gpt3_flashcards/locator/locator.dart';
@@ -38,12 +41,14 @@ final cleanKindleVocabFileProvider =
             .gpt3CleanUpGermanWords(entries.map((e) => e.word).toList());
 
         if (entries.length != cleanedWords.length) {
-          throw Exception('Cleaning result length does not match :c');
+          debugPrint('Cleaning result length does not match :c '
+              'original entries: ${entries.length} items, '
+              'cleaned entries: ${cleanedWords.length} items.');
         }
 
         final cleanedEntries = <KindleVocabEntryModel>[];
 
-        for (int i = 0; i < entries.length - 1; i++) {
+        for (int i = 0; i < min(entries.length, cleanedWords.length) - 1; i++) {
           final originalEntry = entries[i];
           final cleanedWord = cleanedWords[i];
           cleanedEntries.add(originalEntry.copyWith(
